@@ -1,20 +1,24 @@
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
+import { EquipmentService } from './features/equipment.service';
 
 @Controller()
 export class AppController {
-  @EventPattern('category.created') // Escucha el evento
-  handleCategoryCreated(@Payload() message: any) {
-    // Log completo del mensaje recibido
-    console.log('Raw event received in equipment:', message);
+  constructor(private readonly equipmentService: EquipmentService) {}
 
-    // Accede explícitamente a los datos
-    const data = message; // Mensaje recibido directamente
+  @EventPattern('category.created')
+  async handleCategoryCreated(@Payload() message: any) {
+    console.log('Equipment microservice received category.created:', message);
 
-    if (data) {
-      console.log('Deserialized event:', data); // Muestra el evento deserializado
-    } else {
-      console.error('Received event but data is undefined');
-    }
+    // Ejemplo: crear un equipo inicial asociado a la nueva categoría
+    // if (message?.id) {
+    //   await this.equipmentService.create({
+    //     name: `Equipment for ${message.name}`,
+    //     description: `Auto-created equipment linked to category: ${message.name}`,
+    //     status: 'available',
+    //     categoryId: message.id,
+    //   });
+    //   console.log('Auto-created equipment for new category');
+    // }
   }
 }

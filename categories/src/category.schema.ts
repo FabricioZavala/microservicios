@@ -8,6 +8,11 @@ export class Category extends Document {
 
   @Prop()
   description?: string;
+
+  @Prop({ default: 'active' })
+  status: string; // Ejemplo: 'active', 'inactive', etc.
+
+  // Agrega más campos según tu necesidad
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
