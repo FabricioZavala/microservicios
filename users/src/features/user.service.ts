@@ -57,4 +57,13 @@ export class UserService {
   async remove(id: string): Promise<User> {
     return this.userModel.findByIdAndDelete(id).exec();
   }
+
+  //ejecuta cuando se elimina un equipo
+  async removeEquipmentReference(equipmentId: string): Promise<void> {
+    await this.userModel.updateMany(
+      { equipmentIds: equipmentId },
+      { $pull: { equipmentIds: equipmentId } },
+    );
+  }
+  
 }

@@ -1,13 +1,14 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Inject } from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
 import { CreateEquipmentDto } from 'src/dtos/create-equipment.dto';
 import { UpdateEquipmentDto } from 'src/dtos/update-equipment.dto';
-import { EventPattern, Payload } from '@nestjs/microservices';
+import { ClientKafka, EventPattern, Payload } from '@nestjs/microservices';
 
 @Controller('equipment')
 export class EquipmentController {
   constructor(
-    private readonly equipmentService: EquipmentService
+    private readonly equipmentService: EquipmentService,
+    @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka, // Cliente Kafka
   ) {}
 
   // CREATE
@@ -34,6 +35,19 @@ export class EquipmentController {
     return this.equipmentService.update(id, body);
   }
 
+  // DELETE
+  @Delete(':id')
+async remove(@Param('id') id: string) {
+  const deletedEquipment = await this.equipmentService.remove(id);
+
+  // Emitimos el evento "equipment.deleted"
+  this.kafkaClient.emit('equipment.deleted', { id });
+
+  return deletedEquipment;
+}
+
+
+  // Evento para eliminar si se elimina una categoría
   @EventPattern('category.deleted')
   async handleCategoryDeleted(@Payload() message: { id: string }) {
     const categoryId = message.id;
@@ -43,13 +57,12 @@ export class EquipmentController {
   // BULK: retorna varios equipos por sus IDs
   @Post('bulk')
   getEquipmentsBulk(@Body() body: { ids: string[] }) {
-    // Si no hay IDs, retornar array vacío
     return this.equipmentService.findBulkByIds(body.ids || []);
   }
 
-   // Obtener equipos con información de categorías
-   @Get('by-category/:categoryId')
-   async findEquipmentsByCategory(@Param('categoryId') categoryId: string) {
-     return this.equipmentService.findEquipmentsWithCategoryInfo(categoryId);
-   }
+  // Obtener equipos con información de categorías
+  @Get('by-category/:categoryId')
+  async findEquipmentsByCategory(@Param('categoryId') categoryId: string) {
+    return this.equipmentService.findEquipmentsWithCategoryInfo(categoryId);
+  }
 }

@@ -58,6 +58,11 @@ export class EquipmentService {
   }
 
   // DELETE
+  // DELETE un equipo por su ID
+async remove(id: string): Promise<Equipment> {
+  return this.equipmentModel.findByIdAndDelete(id).exec();
+}
+//elimina si elimina una categoria, es decir limpieza de categoría cuando se emite category.deleted
   async removeCategoryReference(categoryId: string): Promise<void> {
     await this.equipmentModel.updateMany(
       { categoryId },

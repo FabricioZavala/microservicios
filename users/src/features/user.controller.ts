@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/commo
 import { UserService } from './user.service';
 import { CreateUserDto } from 'src/dtos/create-user.dto';
 import { UpdateUserDto } from 'src/dtos/update-user.dto';
+import { EventPattern, Payload } from '@nestjs/microservices';
 
 @Controller('users')
 export class UserController {
@@ -35,5 +36,13 @@ export class UserController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.userService.remove(id);
+  }
+
+  //evento para escuchar eliminaciones en equipments
+  @EventPattern('equipment.deleted')
+  async handleEquipmentDeleted(@Payload() message: { id: string }) {
+    const equipmentId = message.id;
+    // Llamamos al servicio para limpiar la referencia
+    await this.userService.removeEquipmentReference(equipmentId);
   }
 }
