@@ -4,11 +4,14 @@ import { Model } from 'mongoose';
 import { User } from './user.schema';
 import { CreateUserDto } from 'src/dtos/create-user.dto';
 import { UpdateUserDto } from 'src/dtos/update-user.dto';
+import { HttpService } from '@nestjs/axios';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
+    private readonly httpService: HttpService
   ) {}
 
   async create(data: CreateUserDto): Promise<User> {
@@ -16,8 +19,31 @@ export class UserService {
     return newUser.save();
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userModel.find().exec();
+  async findAll(): Promise<any[]> {
+    const users = await this.userModel.find().exec();
+
+    const enrichedUsers = await Promise.all(
+      users.map(async user => {
+        const equipmentIds = user.equipmentIds || [];
+        let equipments = [];
+
+        if (equipmentIds.length > 0) {
+          const { data } = await lastValueFrom(
+            this.httpService.post('http://localhost:3001/equipment/bulk', {
+              ids: equipmentIds,
+            }),
+          );
+          equipments = data;
+        }
+
+        return {
+          ...user.toObject(),
+          equipments,
+        };
+      }),
+    );
+
+    return enrichedUsers;
   }
 
   async findOne(id: string): Promise<User> {

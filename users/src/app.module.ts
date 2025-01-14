@@ -6,6 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './features/user.schema';
 import { UserController } from './features/user.controller';
 import { UserService } from './features/user.service';
+import { HttpModule } from '@nestjs/axios';
 
 
 @Module({
@@ -13,6 +14,7 @@ import { UserService } from './features/user.service';
     ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.MONGODB_URI),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    HttpModule
   ],
   controllers: [ UserController],
   providers: [ UserService],

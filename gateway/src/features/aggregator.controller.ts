@@ -1,46 +1,53 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 
 @Controller()
 export class AggregatorController {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService, // Inyectamos ConfigService
+  ) {}
 
-  // Ejemplo: Obtener un User con sus Equipment y la info de Category de cada equipo
   @Get('users-composite/:id')
   async getUserWithEquipment(@Param('id') userId: string) {
-    // 1) Llamar al microservicio Users (puerto 3002) para obtener el usuario
+    // URLs de los microservicios desde el .env
+    const usersServiceUrl = this.configService.get<string>('USERS_SERVICE_URL');
+    const equipmentServiceUrl = this.configService.get<string>('EQUIPMENT_SERVICE_URL');
+    const categoriesServiceUrl = this.configService.get<string>('CATEGORIES_SERVICE_URL');
+
+    // 1) Llamar al microservicio Users
     const { data: user } = await lastValueFrom(
-      this.httpService.get(`http://localhost:3002/users/${userId}`),
+      this.httpService.get(`${usersServiceUrl}/users/${userId}`),
     );
     if (!user) {
       return { message: 'User not found' };
     }
 
-    // 2) Con user.equipmentIds, llamar al microservicio Equipment (puerto 3001)
+    // 2) Llamar al microservicio Equipment
     const equipmentIds = user.equipmentIds || [];
     let equipments = [];
     if (equipmentIds.length > 0) {
-      // Hacemos un POST a /equipment/bulk enviando { ids: [...] }
       const { data } = await lastValueFrom(
-        this.httpService.post(`http://localhost:3001/equipment/bulk`, {
+        this.httpService.post(`${equipmentServiceUrl}/equipment/bulk`, {
           ids: equipmentIds,
         }),
       );
       equipments = data;
     }
 
-    // 3) Para cada equipo, obtener su categoría desde categories (puerto 3000)
+    // 3) Para cada equipo, llamar al microservicio Categories
     for (const eq of equipments) {
       if (eq.categoryId) {
         const { data: category } = await lastValueFrom(
-          this.httpService.get(`http://localhost:3000/categories/${eq.categoryId}`),
+          this.httpService.get(`${categoriesServiceUrl}/categories/${eq.categoryId}`),
         );
-        eq.categoryInfo = category; // Adjuntamos los datos de la categoría
+        eq.categoryInfo = category;
       }
     }
 
-    // 4) Retornar toda la data unificada
+    // 4) Retornar la respuesta unificada
     return {
       ...user,
       equipments,

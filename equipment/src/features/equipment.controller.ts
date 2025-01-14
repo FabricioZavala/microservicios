@@ -5,7 +5,9 @@ import { UpdateEquipmentDto } from 'src/dtos/update-equipment.dto';
 
 @Controller('equipment')
 export class EquipmentController {
-  constructor(private readonly equipmentService: EquipmentService) {}
+  constructor(
+    private readonly equipmentService: EquipmentService
+  ) {}
 
   // CREATE
   @Post()
@@ -43,4 +45,10 @@ export class EquipmentController {
     // Si no hay IDs, retornar array vacío
     return this.equipmentService.findBulkByIds(body.ids || []);
   }
+
+   // Obtener equipos con información de categorías
+   @Get('by-category/:categoryId')
+   async findEquipmentsByCategory(@Param('categoryId') categoryId: string) {
+     return this.equipmentService.findEquipmentsWithCategoryInfo(categoryId);
+   }
 }
