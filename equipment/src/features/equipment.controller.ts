@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/commo
 import { EquipmentService } from './equipment.service';
 import { CreateEquipmentDto } from 'src/dtos/create-equipment.dto';
 import { UpdateEquipmentDto } from 'src/dtos/update-equipment.dto';
+import { EventPattern, Payload } from '@nestjs/microservices';
 
 @Controller('equipment')
 export class EquipmentController {
@@ -33,10 +34,10 @@ export class EquipmentController {
     return this.equipmentService.update(id, body);
   }
 
-  // DELETE
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.equipmentService.remove(id);
+  @EventPattern('category.deleted')
+  async handleCategoryDeleted(@Payload() message: { id: string }) {
+    const categoryId = message.id;
+    await this.equipmentService.removeCategoryReference(categoryId);
   }
 
   // BULK: retorna varios equipos por sus IDs

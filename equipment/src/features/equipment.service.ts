@@ -58,9 +58,13 @@ export class EquipmentService {
   }
 
   // DELETE
-  async remove(id: string): Promise<Equipment> {
-    return this.equipmentModel.findByIdAndDelete(id).exec();
+  async removeCategoryReference(categoryId: string): Promise<void> {
+    await this.equipmentModel.updateMany(
+      { categoryId },
+      { $unset: { categoryId: "" } } // Limpia el campo categoryId
+    );
   }
+  
 
   // FIND BULK (para varios IDs a la vez)
   async findBulkByIds(ids: string[]): Promise<Equipment[]> {

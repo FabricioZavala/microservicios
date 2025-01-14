@@ -1,4 +1,14 @@
-import { Controller, Post, Get, Param, Body, Patch, Delete, Inject, OnModuleInit } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  Patch,
+  Delete,
+  Inject,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dtos/create-category.dto';
@@ -59,6 +69,11 @@ export class CategoryController implements OnModuleInit {
   // DELETE
   @Delete(':id')
   async deleteCategory(@Param('id') id: string) {
-    return this.categoryService.remove(id);
+    const deletedCategory = await this.categoryService.remove(id);
+
+    // Emitir evento "category.deleted" a Kafka
+    this.kafkaClient.emit('category.deleted', { id });
+
+    return deletedCategory;
   }
 }
