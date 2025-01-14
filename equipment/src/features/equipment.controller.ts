@@ -36,4 +36,11 @@ export class EquipmentController {
   remove(@Param('id') id: string) {
     return this.equipmentService.remove(id);
   }
+
+  // BULK: retorna varios equipos por sus IDs
+  @Post('bulk')
+  getEquipmentsBulk(@Body() body: { ids: string[] }) {
+    // Si no hay IDs, retornar array vacío
+    return this.equipmentService.findBulkByIds(body.ids || []);
+  }
 }

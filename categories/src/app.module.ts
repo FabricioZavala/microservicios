@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
+// import { AppService } from './app.service';
 import { CategoryController } from './category.controller';
 import { CategoryService } from './category.service';
 import { Category, CategorySchema } from './category.schema';
@@ -34,6 +34,6 @@ import { Category, CategorySchema } from './category.schema';
     MongooseModule.forFeature([{ name: Category.name, schema: CategorySchema }]),
   ],
   controllers: [AppController, CategoryController],
-  providers: [AppService, CategoryService],
+  providers: [ CategoryService],
 })
 export class AppModule {}

@@ -36,4 +36,10 @@ export class EquipmentService {
   async remove(id: string): Promise<Equipment> {
     return this.equipmentModel.findByIdAndDelete(id).exec();
   }
+
+  // FIND BULK (para varios IDs a la vez)
+  async findBulkByIds(ids: string[]): Promise<Equipment[]> {
+    if (!ids || ids.length === 0) return [];
+    return this.equipmentModel.find({ _id: { $in: ids } }).exec();
+  }
 }
