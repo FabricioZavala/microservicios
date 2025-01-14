@@ -3,21 +3,21 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 
-@Controller()
+@Controller('aggregator')
 export class AggregatorController {
   constructor(
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService, // Inyectamos ConfigService
+    private readonly configService: ConfigService,
   ) {}
 
   @Get('users-composite/:id')
   async getUserWithEquipment(@Param('id') userId: string) {
-    // URLs de los microservicios desde el .env
+    // Leer URLs de microservicios desde .env
     const usersServiceUrl = this.configService.get<string>('USERS_SERVICE_URL');
     const equipmentServiceUrl = this.configService.get<string>('EQUIPMENT_SERVICE_URL');
     const categoriesServiceUrl = this.configService.get<string>('CATEGORIES_SERVICE_URL');
 
-    // 1) Llamar al microservicio Users
+    // 1) Obtener User por ID
     const { data: user } = await lastValueFrom(
       this.httpService.get(`${usersServiceUrl}/users/${userId}`),
     );
@@ -25,19 +25,18 @@ export class AggregatorController {
       return { message: 'User not found' };
     }
 
-    // 2) Llamar al microservicio Equipment
-    const equipmentIds = user.equipmentIds || [];
+    // 2) Obtener los equipos del usuario (bulk)
     let equipments = [];
-    if (equipmentIds.length > 0) {
+    if (user.equipmentIds && user.equipmentIds.length > 0) {
       const { data } = await lastValueFrom(
         this.httpService.post(`${equipmentServiceUrl}/equipment/bulk`, {
-          ids: equipmentIds,
+          ids: user.equipmentIds,
         }),
       );
       equipments = data;
     }
 
-    // 3) Para cada equipo, llamar al microservicio Categories
+    // 3) Para cada equipo, obtener su categoría
     for (const eq of equipments) {
       if (eq.categoryId) {
         const { data: category } = await lastValueFrom(
@@ -47,7 +46,7 @@ export class AggregatorController {
       }
     }
 
-    // 4) Retornar la respuesta unificada
+    // 4) Devolver la respuesta compuesta
     return {
       ...user,
       equipments,
