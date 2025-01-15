@@ -44,20 +44,20 @@ export class AuthService {
     const { email, password } = dto;
     const user = await this.userModel.findOne({ email });
     if (!user) {
-      throw new UnauthorizedException('Credenciales no válidas (email)');
+      throw new UnauthorizedException('El email no está registrado o es incorrecto');
     }
-
+  
     // Verificar contraseña
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      throw new UnauthorizedException('Credenciales no válidas (password)');
+      throw new UnauthorizedException('Contraseña incorrecta');
     }
-
+  
     // Generar tokens
     const payload = { sub: user._id, roles: user.roles };
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
+  
     return {
       message: 'Login exitoso',
       accessToken,
@@ -66,6 +66,7 @@ export class AuthService {
       roles: user.roles,
     };
   }
+  
 
   async updateUser(id: string, dto: any) {
     const user = await this.userModel.findById(id);

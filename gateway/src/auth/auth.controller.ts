@@ -1,5 +1,5 @@
 // auth.controller.ts (en el gateway)
-import { Controller, Post, Body, Patch, Param } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, HttpException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
@@ -25,10 +25,20 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() loginDto: any) {
-    const { data } = await lastValueFrom(
-      this.httpService.post(`${this.authServiceUrl}/auth/login`, loginDto),
-    );
-    return data;
+    try {
+      const { data } = await lastValueFrom(
+        this.httpService.post(`${this.authServiceUrl}/auth/login`, loginDto),
+      );
+      return data;
+    } catch (error) {
+      if (error.response && error.response.status === 401) {
+        throw new HttpException(
+          'Credenciales incorrectas.',
+          401,
+        );
+      }
+      throw new HttpException('Error en el servidor. Intenta nuevamente.', 500);
+    }
   }
 
   @Patch('update/:id')
