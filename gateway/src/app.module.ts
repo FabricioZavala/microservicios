@@ -13,6 +13,7 @@ import { CategoriesController } from './categories/categories.controller';
     HttpModule, // Permite usar HttpService
   ],
   controllers: [
+    //ver si agregator controller es funcional sino borrarlo
     AggregatorController, 
     UsersController,
     EquipmentController,
