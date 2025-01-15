@@ -5,6 +5,7 @@ import { AggregatorController } from './features/aggregator.controller';
 import { UsersController } from './users/users.controller';
 import { EquipmentController } from './equipment/equipment.controller';
 import { CategoriesController } from './categories/categories.controller';
+import { AuthController } from './auth/auth.controller';
 
 
 @Module({
@@ -18,6 +19,7 @@ import { CategoriesController } from './categories/categories.controller';
     UsersController,
     EquipmentController,
     CategoriesController,
+    AuthController
   ],
 })
 export class AppModule {}
