@@ -29,7 +29,6 @@ import { JwtMiddleware } from './middleware/jwt.middleware';
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'secretKey',
-      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '1h' },
     }),
   ],
   controllers: [AuthController],
