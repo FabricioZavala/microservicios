@@ -1,5 +1,5 @@
 // auth.controller.ts (en el gateway)
-import { Controller, Post, Body, Patch, Param, HttpException } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, HttpException, Get } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
@@ -50,5 +50,20 @@ export class AuthController {
       ),
     );
     return data;
+  }
+
+  @Get('users')
+  async getAllUsers() {
+    try {
+      const { data } = await lastValueFrom(
+        this.httpService.get(`${this.authServiceUrl}/auth/users`),
+      );
+      return data;
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener usuarios desde el microservicio.',
+        error.response?.status || 500,
+      );
+    }
   }
 }
