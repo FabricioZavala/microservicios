@@ -8,7 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { UserAuth } from './user-auth.schema'; 
+import { UserAuth } from './user-auth.schema';
 import { RegisterDto } from 'src/dtos/register.dto';
 import { LoginDto } from 'src/dtos/login.dto';
 
@@ -56,7 +56,9 @@ export class AuthService {
     }
 
     const payload = { sub: user._id, roles: user.roles };
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '1h',
+    });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     return {
@@ -108,5 +110,13 @@ export class AuthService {
       throw new NotFoundException('No se encontraron usuarios.');
     }
     return users;
+  }
+
+  async getUserById(userId: string) {
+    const user = await this.userModel.findById(userId, '-password');
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado.');
+    }
+    return user;
   }
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ClientsModule, Transport } from '@nestjs/microservices';
@@ -6,17 +6,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { UserAuth, UserAuthSchema } from './config/user-auth.schema';
 import { AuthController } from './config/auth.controller';
 import { AuthService } from './config/auth.service';
-
+import { JwtMiddleware } from './middleware/jwt.middleware';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    // Conexión a la MISMA base de datos que users
     MongooseModule.forRoot(process.env.MONGODB_URI),
-    // Usar la misma colección 'users'
     MongooseModule.forFeature([{ name: UserAuth.name, schema: UserAuthSchema }]),
-
-    // Kafka (opcional, si usas microservicios)
     ClientsModule.register([
       {
         name: 'KAFKA_SERVICE',
@@ -31,14 +27,18 @@ import { AuthService } from './config/auth.service';
         },
       },
     ]),
-
-    // JWT
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'secretKey',
-      signOptions: { expiresIn: '15m' },
+      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '1h' },
     }),
   ],
   controllers: [AuthController],
   providers: [AuthService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(JwtMiddleware)
+      .forRoutes('auth/me');
+  }
+}

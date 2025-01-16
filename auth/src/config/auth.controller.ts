@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from 'src/dtos/register.dto';
 import { LoginDto } from 'src/dtos/login.dto';
@@ -30,5 +30,14 @@ export class AuthController {
   @Get('users')
   getAllUsers() {
     return this.authService.getAllUsers();
+  }
+
+  @Get('me')
+  async getLoggedInUser(@Req() req: any) {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('Token inválido o faltante.');
+    }
+    return this.authService.getUserById(userId);
   }
 }

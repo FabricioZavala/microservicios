@@ -1,5 +1,13 @@
-// auth.controller.ts (en el gateway)
-import { Controller, Post, Body, Patch, Param, HttpException, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Patch,
+  Param,
+  HttpException,
+  Get,
+  Req,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
@@ -32,10 +40,7 @@ export class AuthController {
       return data;
     } catch (error) {
       if (error.response && error.response.status === 401) {
-        throw new HttpException(
-          'Credenciales incorrectas.',
-          401,
-        );
+        throw new HttpException('Credenciales incorrectas.', 401);
       }
       throw new HttpException('Error en el servidor. Intenta nuevamente.', 500);
     }
@@ -62,6 +67,29 @@ export class AuthController {
     } catch (error) {
       throw new HttpException(
         'Error al obtener usuarios desde el microservicio.',
+        error.response?.status || 500,
+      );
+    }
+  }
+
+  @Get('me')
+  async getLoggedInUser(@Req() req: any) {
+    try {
+      const accessToken = req.headers.authorization?.split(' ')[1];
+      if (!accessToken) {
+        throw new HttpException('Token no proporcionado.', 401);
+      }
+
+      const { data } = await lastValueFrom(
+        this.httpService.get(`${this.authServiceUrl}/auth/me`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+      );
+      return data;
+    } catch (error) {
+      throw new HttpException(
+        error.response?.data?.message ||
+          'Error al obtener el usuario logueado desde el microservicio.',
         error.response?.status || 500,
       );
     }
