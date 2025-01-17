@@ -26,11 +26,51 @@ export class EquipmentService {
     return newEquipment.save();
   }
 
-  async findAll(): Promise<any[]> {
-    const equipments = await this.equipmentModel.find().sort({_id: -1}).exec();
-
+  async findAll(query: any): Promise<{ data: any[]; totalCount: number }> {
+    const { page = 1, limit = 10, name, description, status, categoryName } = query;
+  
+    const filters: any = {};
+  
+    if (name) filters.name = { $regex: name, $options: 'i' };
+    if (description) filters.description = { $regex: description, $options: 'i' };
+    if (status) filters.status = status;
+  
+    let categoryIds: string[] = [];
+    if (categoryName) {
+      try {
+        const { data } = await lastValueFrom(
+          this.httpService.get(`${this.categoriesServiceUrl}/categories`, {
+            params: { name: categoryName },
+          }),
+        );
+  
+        const categories = data.data; // Asegúrate de acceder a la propiedad `data` del microservicio
+        if (categories && categories.length > 0) {
+          categoryIds = categories.map((cat: any) => cat._id);
+          filters.categoryId = { $in: categoryIds };
+        } else {
+          console.log(`No se encontraron categorías con el nombre: ${categoryName}`);
+          return { data: [], totalCount: 0 }; // Si no hay categorías coincidentes, devolver vacío
+        }
+      } catch (error) {
+        console.error('Error al obtener categorías:', error.message);
+        throw new Error('Error al buscar categorías');
+      }
+    }
+  
+    console.log('Filtros aplicados:', filters);
+  
+    const totalCount = await this.equipmentModel.countDocuments(filters);
+  
+    const equipments = await this.equipmentModel
+      .find(filters)
+      .sort({ _id: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .exec();
+  
     const enrichedEquipments = await Promise.all(
-      equipments.map(async equipment => {
+      equipments.map(async (equipment) => {
         if (equipment.categoryId) {
           const { data: categoryInfo } = await lastValueFrom(
             this.httpService.get(`${this.categoriesServiceUrl}/categories/${equipment.categoryId}`),
@@ -43,10 +83,11 @@ export class EquipmentService {
         return equipment.toObject();
       }),
     );
-
-    return enrichedEquipments;
+  
+    return { data: enrichedEquipments, totalCount };
   }
-
+  
+  
   // FIND ONE
   async findOne(id: string): Promise<Equipment> {
     return this.equipmentModel.findById(id).exec();

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Inject } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Inject, Query } from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
 import { CreateEquipmentDto } from 'src/dtos/create-equipment.dto';
 import { UpdateEquipmentDto } from 'src/dtos/update-equipment.dto';
@@ -19,8 +19,8 @@ export class EquipmentController {
 
   // READ ALL
   @Get()
-  findAll() {
-    return this.equipmentService.findAll();
+  async findAll(@Query() query: any) {
+    return this.equipmentService.findAll(query);
   }
 
   // READ ONE

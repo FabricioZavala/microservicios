@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
@@ -16,9 +16,11 @@ export class EquipmentController {
 
   // Obtener todos los equipos
   @Get()
-  async getAllEquipments() {
+  async getAllEquipments(@Query() query: any) {
     const { data } = await lastValueFrom(
-      this.httpService.get(`${this.equipmentServiceUrl}/equipment`),
+      this.httpService.get(`${this.equipmentServiceUrl}/equipment`, {
+        params: query,
+      }),
     );
     return data;
   }
