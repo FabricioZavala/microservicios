@@ -27,7 +27,7 @@ export class EquipmentService {
   }
 
   async findAll(): Promise<any[]> {
-    const equipments = await this.equipmentModel.find().exec();
+    const equipments = await this.equipmentModel.find().sort({_id: -1}).exec();
 
     const enrichedEquipments = await Promise.all(
       equipments.map(async equipment => {

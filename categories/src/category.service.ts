@@ -19,7 +19,7 @@ export class CategoryService {
 
   // Leer todas las categorías
   async findAll(): Promise<Category[]> {
-    return this.categoryModel.find().exec();
+    return this.categoryModel.find().sort({createdAt: -1}).exec();
   }
 
   // Leer una categoría por ID

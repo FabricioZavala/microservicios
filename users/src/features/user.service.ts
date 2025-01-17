@@ -11,7 +11,7 @@ import { lastValueFrom } from 'rxjs';
 export class UserService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
-    private readonly httpService: HttpService
+    private readonly httpService: HttpService,
   ) {}
 
   async create(data: CreateUserDto): Promise<User> {
@@ -20,10 +20,10 @@ export class UserService {
   }
 
   async findAll(): Promise<any[]> {
-    const users = await this.userModel.find().exec();
+    const users = await this.userModel.find().sort({ _id: -1 }).exec();
 
     const enrichedUsers = await Promise.all(
-      users.map(async user => {
+      users.map(async (user) => {
         const equipmentIds = user.equipmentIds || [];
         let equipments = [];
 
@@ -58,12 +58,10 @@ export class UserService {
     return this.userModel.findByIdAndDelete(id).exec();
   }
 
-  //ejecuta cuando se elimina un equipo
   async removeEquipmentReference(equipmentId: string): Promise<void> {
     await this.userModel.updateMany(
       { equipmentIds: equipmentId },
       { $pull: { equipmentIds: equipmentId } },
     );
   }
-  
 }
