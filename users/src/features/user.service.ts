@@ -19,32 +19,62 @@ export class UserService {
     return newUser.save();
   }
 
-  async findAll(): Promise<any[]> {
-    const users = await this.userModel.find().sort({ _id: -1 }).exec();
+  async findAll(query: any): Promise<{ data: any[]; totalCount: number }> {
+    const { page = 1, limit = 10, username, email, status, roles } = query;
+
+    const filters: any = {};
+
+    if (username) {
+        filters.username = { $regex: username, $options: 'i' }; // Búsqueda parcial y sin distinción de mayúsculas
+    }
+    if (query.fullName) {
+      filters.fullName = { $regex: query.fullName, $options: 'i' }; // Filtro insensible a mayúsculas
+    }
+    if (email) {
+        filters.email = { $regex: email, $options: 'i' }; // Búsqueda parcial
+    }
+    if (status) {
+        filters.status = status; // Búsqueda exacta
+    }
+    if (roles) {
+        filters.roles = { $in: [roles] }; // Roles deben coincidir
+    }
+
+    console.log('Filtros aplicados:', filters);
+
+    const totalCount = await this.userModel.countDocuments(filters);
+    const users = await this.userModel
+        .find(filters)
+        .sort({ _id: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .exec();
 
     const enrichedUsers = await Promise.all(
-      users.map(async (user) => {
-        const equipmentIds = user.equipmentIds || [];
-        let equipments = [];
+        users.map(async (user) => {
+            const equipmentIds = user.equipmentIds || [];
+            let equipments = [];
 
-        if (equipmentIds.length > 0) {
-          const { data } = await lastValueFrom(
-            this.httpService.post('http://localhost:3001/equipment/bulk', {
-              ids: equipmentIds,
-            }),
-          );
-          equipments = data;
-        }
+            if (equipmentIds.length > 0) {
+                const { data } = await lastValueFrom(
+                    this.httpService.post('http://localhost:3001/equipment/bulk', {
+                        ids: equipmentIds,
+                    }),
+                );
+                equipments = data;
+            }
 
-        return {
-          ...user.toObject(),
-          equipments,
-        };
-      }),
+            return {
+                ...user.toObject(),
+                equipments,
+            };
+        }),
     );
 
-    return enrichedUsers;
-  }
+    return { data: enrichedUsers, totalCount };
+}
+
+  
 
   async findOne(id: string): Promise<User> {
     return this.userModel.findById(id).exec();

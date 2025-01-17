@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
@@ -14,14 +14,16 @@ export class UsersController {
     this.usersServiceUrl = this.configService.get<string>('USERS_SERVICE_URL');
   }
 
-  // Obtener todos los usuarios
   @Get()
-  async getAllUsers() {
+async getAllUsers(@Query() query: any) {
     const { data } = await lastValueFrom(
-      this.httpService.get(`${this.usersServiceUrl}/users`),
+        this.httpService.get(`${this.usersServiceUrl}/users`, {
+            params: query,
+        }),
     );
     return data;
-  }
+}
+
 
   // Obtener un usuario por ID
   @Get(':id')
