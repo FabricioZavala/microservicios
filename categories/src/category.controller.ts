@@ -8,6 +8,7 @@ import {
   Delete,
   Inject,
   OnModuleInit,
+  Query,
 } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { CategoryService } from './category.service';
@@ -47,8 +48,8 @@ export class CategoryController implements OnModuleInit {
 
   // READ ALL
   @Get()
-  async getAllCategories() {
-    return this.categoryService.findAll();
+  async getAllCategories(@Query() query: any) {
+    return this.categoryService.findAll(query);
   }
 
   // READ ONE

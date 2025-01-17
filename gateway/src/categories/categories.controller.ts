@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
@@ -11,23 +20,40 @@ export class CategoriesController {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
-    this.categoriesServiceUrl = this.configService.get<string>('CATEGORIES_SERVICE_URL');
+    this.categoriesServiceUrl = this.configService.get<string>(
+      'CATEGORIES_SERVICE_URL',
+    );
   }
 
   // Obtener todas las categorías
   @Get()
-  async getAllCategories() {
-    const { data } = await lastValueFrom(
-      this.httpService.get(`${this.categoriesServiceUrl}/categories`),
-    );
-    return data;
+  async getAllCategories(@Query() query: any) {
+    // Construcción de la URL correcta
+    const url = `${this.categoriesServiceUrl}/categories`; // Asegurar la ruta base correcta
+
+    try {
+      const { data } = await lastValueFrom(
+        this.httpService.get(url, {
+          params: query, // Pasar los parámetros de consulta al microservicio
+        }),
+      );
+      return data;
+    } catch (error) {
+      console.error(
+        'Error al obtener categorías desde el microservicio:',
+        error.message,
+      );
+      throw error;
+    }
   }
 
   // Obtener una categoría por ID
   @Get(':id')
   async getCategoryById(@Param('id') categoryId: string) {
     const { data } = await lastValueFrom(
-      this.httpService.get(`${this.categoriesServiceUrl}/categories/${categoryId}`),
+      this.httpService.get(
+        `${this.categoriesServiceUrl}/categories/${categoryId}`,
+      ),
     );
     return data;
   }
@@ -36,7 +62,10 @@ export class CategoriesController {
   @Post()
   async createCategory(@Body() createCategoryDto: any) {
     const { data } = await lastValueFrom(
-      this.httpService.post(`${this.categoriesServiceUrl}/categories`, createCategoryDto),
+      this.httpService.post(
+        `${this.categoriesServiceUrl}/categories`,
+        createCategoryDto,
+      ),
     );
     return data;
   }
@@ -48,7 +77,10 @@ export class CategoriesController {
     @Body() updateCategoryDto: any,
   ) {
     const { data } = await lastValueFrom(
-      this.httpService.patch(`${this.categoriesServiceUrl}/categories/${categoryId}`, updateCategoryDto),
+      this.httpService.patch(
+        `${this.categoriesServiceUrl}/categories/${categoryId}`,
+        updateCategoryDto,
+      ),
     );
     return data;
   }
@@ -57,7 +89,9 @@ export class CategoriesController {
   @Delete(':id')
   async deleteCategory(@Param('id') categoryId: string) {
     const { data } = await lastValueFrom(
-      this.httpService.delete(`${this.categoriesServiceUrl}/categories/${categoryId}`),
+      this.httpService.delete(
+        `${this.categoriesServiceUrl}/categories/${categoryId}`,
+      ),
     );
     return data;
   }
