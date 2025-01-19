@@ -8,7 +8,7 @@ export class AppController {
 
   @EventPattern('category.created')
   async handleCategoryCreated(@Payload() message: any) {
-    console.log('Equipment microservice received category.created:', message);
+    // console.log('Equipment microservice received category.created:', message);
 
     // Ejemplo: crear un equipo inicial asociado a la nueva categoría
     // if (message?.id) {
