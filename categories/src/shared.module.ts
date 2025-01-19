@@ -19,3 +19,4 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
   exports: [ClientsModule],
 })
 export class SharedModule {}
+//tambien eliminar pq no se usa jijija x2

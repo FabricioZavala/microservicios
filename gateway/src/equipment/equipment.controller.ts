@@ -1,65 +1,91 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 
-@Controller('equipment-gateway')
-export class EquipmentController {
-  private equipmentServiceUrl: string;
+@Controller('categories-gateway')
+export class CategoriesController {
+  private categoriesServiceUrl: string;
 
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
-    this.equipmentServiceUrl = this.configService.get<string>('EQUIPMENT_SERVICE_URL');
+    this.categoriesServiceUrl = this.configService.get<string>(
+      'CATEGORIES_SERVICE_URL',
+    );
   }
 
-  // Obtener todos los equipos
   @Get()
-  async getAllEquipments(@Query() query: any) {
-    const { data } = await lastValueFrom(
-      this.httpService.get(`${this.equipmentServiceUrl}/equipment`, {
-        params: query,
-      }),
-    );
-    return data;
+  async getAllCategories(@Query() query: any) {
+    const url = `${this.categoriesServiceUrl}/categories`;
+
+    try {
+      const { data } = await lastValueFrom(
+        this.httpService.get(url, {
+          params: query,
+        }),
+      );
+      return data;
+    } catch (error) {
+      console.error(
+        'Error al obtener categorías desde el microservicio:',
+        error.message,
+      );
+      throw error;
+    }
   }
 
-  // Obtener un equipo por ID
   @Get(':id')
-  async getEquipment(@Param('id') equipmentId: string) {
+  async getCategoryById(@Param('id') categoryId: string) {
     const { data } = await lastValueFrom(
-      this.httpService.get(`${this.equipmentServiceUrl}/equipment/${equipmentId}`),
+      this.httpService.get(
+        `${this.categoriesServiceUrl}/categories/${categoryId}`,
+      ),
     );
     return data;
   }
 
-  // Crear un equipo
   @Post()
-  async createEquipment(@Body() createEquipmentDto: any) {
+  async createCategory(@Body() createCategoryDto: any) {
     const { data } = await lastValueFrom(
-      this.httpService.post(`${this.equipmentServiceUrl}/equipment`, createEquipmentDto),
+      this.httpService.post(
+        `${this.categoriesServiceUrl}/categories`,
+        createCategoryDto,
+      ),
     );
     return data;
   }
 
-  // Actualizar un equipo
   @Patch(':id')
-  async updateEquipment(
-    @Param('id') equipmentId: string,
-    @Body() updateEquipmentDto: any,
+  async updateCategory(
+    @Param('id') categoryId: string,
+    @Body() updateCategoryDto: any,
   ) {
     const { data } = await lastValueFrom(
-      this.httpService.patch(`${this.equipmentServiceUrl}/equipment/${equipmentId}`, updateEquipmentDto),
+      this.httpService.patch(
+        `${this.categoriesServiceUrl}/categories/${categoryId}`,
+        updateCategoryDto,
+      ),
     );
     return data;
   }
 
-  // Eliminar un equipo
   @Delete(':id')
-  async deleteEquipment(@Param('id') equipmentId: string) {
+  async deleteCategory(@Param('id') categoryId: string) {
     const { data } = await lastValueFrom(
-      this.httpService.delete(`${this.equipmentServiceUrl}/equipment/${equipmentId}`),
+      this.httpService.delete(
+        `${this.categoriesServiceUrl}/categories/${categoryId}`,
+      ),
     );
     return data;
   }

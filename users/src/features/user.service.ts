@@ -25,22 +25,20 @@ export class UserService {
     const filters: any = {};
 
     if (username) {
-        filters.username = { $regex: username, $options: 'i' }; // Búsqueda parcial y sin distinción de mayúsculas
+        filters.username = { $regex: username, $options: 'i' };
     }
     if (query.fullName) {
-      filters.fullName = { $regex: query.fullName, $options: 'i' }; // Filtro insensible a mayúsculas
+      filters.fullName = { $regex: query.fullName, $options: 'i' };
     }
     if (email) {
-        filters.email = { $regex: email, $options: 'i' }; // Búsqueda parcial
+        filters.email = { $regex: email, $options: 'i' };
     }
     if (status) {
-        filters.status = status; // Búsqueda exacta
+        filters.status = status;
     }
     if (roles) {
-        filters.roles = { $in: [roles] }; // Roles deben coincidir
+        filters.roles = { $in: [roles] };
     }
-
-    console.log('Filtros aplicados:', filters);
 
     const totalCount = await this.userModel.countDocuments(filters);
     const users = await this.userModel
@@ -63,7 +61,7 @@ export class UserService {
                 );
                 equipments = data;
             }
-
+            //probar cambiarle la ruta del getall normal k no sea bulk
             return {
                 ...user.toObject(),
                 equipments,
@@ -72,9 +70,7 @@ export class UserService {
     );
 
     return { data: enrichedUsers, totalCount };
-}
-
-  
+  }
 
   async findOne(id: string): Promise<User> {
     return this.userModel.findById(id).exec();

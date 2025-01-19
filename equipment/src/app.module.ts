@@ -19,7 +19,7 @@ import { EquipmentService } from './features/equipment.service';
         transport: Transport.KAFKA,
         options: {
           client: {
-            brokers: ['localhost:9092'], // Tu broker Kafka
+            brokers: ['localhost:9092'],
           },
           consumer: {
             groupId: 'equipment-consumer',

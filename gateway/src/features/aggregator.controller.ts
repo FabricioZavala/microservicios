@@ -9,7 +9,7 @@ export class AggregatorController {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {}
-
+//borrae esto
   @Get('users-composite/:id')
   async getUserWithEquipment(@Param('id') userId: string) {
     // Leer URLs de microservicios desde .env
@@ -53,3 +53,5 @@ export class AggregatorController {
     };
   }
 }
+
+//no uso esto, eliminarrrrrrrr 

@@ -12,7 +12,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 
-@Controller('categories-gateway') // Base route
+@Controller('categories-gateway')
 export class CategoriesController {
   private categoriesServiceUrl: string;
 
@@ -25,16 +25,14 @@ export class CategoriesController {
     );
   }
 
-  // Obtener todas las categorías
   @Get()
   async getAllCategories(@Query() query: any) {
-    // Construcción de la URL correcta
-    const url = `${this.categoriesServiceUrl}/categories`; // Asegurar la ruta base correcta
+    const url = `${this.categoriesServiceUrl}/categories`;
 
     try {
       const { data } = await lastValueFrom(
         this.httpService.get(url, {
-          params: query, // Pasar los parámetros de consulta al microservicio
+          params: query,
         }),
       );
       return data;
@@ -47,7 +45,6 @@ export class CategoriesController {
     }
   }
 
-  // Obtener una categoría por ID
   @Get(':id')
   async getCategoryById(@Param('id') categoryId: string) {
     const { data } = await lastValueFrom(
@@ -58,7 +55,6 @@ export class CategoriesController {
     return data;
   }
 
-  // Crear una nueva categoría
   @Post()
   async createCategory(@Body() createCategoryDto: any) {
     const { data } = await lastValueFrom(
@@ -70,7 +66,6 @@ export class CategoriesController {
     return data;
   }
 
-  // Actualizar una categoría existente
   @Patch(':id')
   async updateCategory(
     @Param('id') categoryId: string,
@@ -85,7 +80,6 @@ export class CategoriesController {
     return data;
   }
 
-  // Eliminar una categoría
   @Delete(':id')
   async deleteCategory(@Param('id') categoryId: string) {
     const { data } = await lastValueFrom(

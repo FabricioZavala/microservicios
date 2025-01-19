@@ -19,7 +19,7 @@ import { UserService } from './features/user.service';
         transport: Transport.KAFKA,
         options: {
           client: {
-            brokers: ['localhost:9092'], // Tu broker Kafka
+            brokers: ['localhost:9092'],
           },
           consumer: {
             groupId: 'users-consumer',

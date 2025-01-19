@@ -10,11 +10,11 @@ import { AuthController } from './auth/auth.controller';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }), // Para leer variables de entorno de .env
-    HttpModule, // Permite usar HttpService
+    ConfigModule.forRoot({ isGlobal: true }), 
+    HttpModule,
   ],
   controllers: [
-    //ver si agregator controller es funcional sino borrarlo
+    //ver si agregator controller es funcional sino borrarlo, pd ya lo comrpobé, no funciona borraloooo
     AggregatorController, 
     UsersController,
     EquipmentController,

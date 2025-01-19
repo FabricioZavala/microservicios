@@ -20,7 +20,6 @@ export class EquipmentService {
     this.categoriesServiceUrl = this.configService.get<string>('CATEGORIES_SERVICE_URL');
   }
 
-  // CREATE
   async create(data: CreateEquipmentDto): Promise<Equipment> {
     const newEquipment = new this.equipmentModel(data);
     return newEquipment.save();
@@ -44,21 +43,17 @@ export class EquipmentService {
           }),
         );
   
-        const categories = data.data; // Asegúrate de acceder a la propiedad `data` del microservicio
+        const categories = data.data;
         if (categories && categories.length > 0) {
           categoryIds = categories.map((cat: any) => cat._id);
           filters.categoryId = { $in: categoryIds };
         } else {
-          console.log(`No se encontraron categorías con el nombre: ${categoryName}`);
-          return { data: [], totalCount: 0 }; // Si no hay categorías coincidentes, devolver vacío
+          return { data: [], totalCount: 0 };
         }
       } catch (error) {
-        console.error('Error al obtener categorías:', error.message);
         throw new Error('Error al buscar categorías');
       }
     }
-  
-    console.log('Filtros aplicados:', filters);
   
     const totalCount = await this.equipmentModel.countDocuments(filters);
   
@@ -86,48 +81,38 @@ export class EquipmentService {
   
     return { data: enrichedEquipments, totalCount };
   }
-  
-  
-  // FIND ONE
+
   async findOne(id: string): Promise<Equipment> {
     return this.equipmentModel.findById(id).exec();
   }
 
-  // UPDATE
   async update(id: string, data: UpdateEquipmentDto): Promise<Equipment> {
     return this.equipmentModel.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
-  // DELETE
-  // DELETE un equipo por su ID
-async remove(id: string): Promise<Equipment> {
-  return this.equipmentModel.findByIdAndDelete(id).exec();
-}
-//elimina si elimina una categoria, es decir limpieza de categoría cuando se emite category.deleted
+  async remove(id: string): Promise<Equipment> {
+    return this.equipmentModel.findByIdAndDelete(id).exec();
+  }
+
   async removeCategoryReference(categoryId: string): Promise<void> {
     await this.equipmentModel.updateMany(
       { categoryId },
-      { $unset: { categoryId: "" } } // Limpia el campo categoryId
+      { $unset: { categoryId: "" } }
     );
   }
-  
 
-  // FIND BULK (para varios IDs a la vez)
   async findBulkByIds(ids: string[]): Promise<Equipment[]> {
     if (!ids || ids.length === 0) return [];
     return this.equipmentModel.find({ _id: { $in: ids } }).exec();
   }
 
   async findEquipmentsWithCategoryInfo(categoryId: string): Promise<any[]> {
-    // Buscar los equipos con la categoría específica
     const equipments = await this.equipmentModel.find({ categoryId }).exec();
 
-    // Obtener información de la categoría del microservicio Categories
     const { data: categoryInfo } = await lastValueFrom(
       this.httpService.get(`http://localhost:3000/categories/${categoryId}`),
     );
 
-    // Enriquecer cada equipo con la información de la categoría
     return equipments.map(equipment => ({
       ...equipment.toObject(),
       categoryInfo,

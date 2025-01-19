@@ -15,17 +15,15 @@ export class UsersController {
   }
 
   @Get()
-async getAllUsers(@Query() query: any) {
+  async getAllUsers(@Query() query: any) {
     const { data } = await lastValueFrom(
-        this.httpService.get(`${this.usersServiceUrl}/users`, {
-            params: query,
-        }),
+      this.httpService.get(`${this.usersServiceUrl}/users`, {
+        params: query,
+      }),
     );
     return data;
-}
+  }
 
-
-  // Obtener un usuario por ID
   @Get(':id')
   async getUser(@Param('id') userId: string) {
     const { data } = await lastValueFrom(
@@ -34,7 +32,6 @@ async getAllUsers(@Query() query: any) {
     return data;
   }
 
-  // Crear un usuario
   @Post()
   async createUser(@Body() createUserDto: any) {
     const { data } = await lastValueFrom(
@@ -43,7 +40,6 @@ async getAllUsers(@Query() query: any) {
     return data;
   }
 
-  // Actualizar un usuario
   @Patch(':id')
   async updateUser(
     @Param('id') userId: string,
@@ -55,7 +51,6 @@ async getAllUsers(@Query() query: any) {
     return data;
   }
 
-  // Eliminar un usuario
   @Delete(':id')
   async deleteUser(@Param('id') userId: string) {
     const { data } = await lastValueFrom(
