@@ -1,91 +1,60 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Param,
-  Body,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 
-@Controller('categories-gateway')
-export class CategoriesController {
-  private categoriesServiceUrl: string;
+@Controller('equipment-gateway')
+export class EquipmentController {
+  private equipmentServiceUrl: string;
 
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
-    this.categoriesServiceUrl = this.configService.get<string>(
-      'CATEGORIES_SERVICE_URL',
-    );
+    this.equipmentServiceUrl = this.configService.get<string>('EQUIPMENT_SERVICE_URL');
   }
 
   @Get()
-  async getAllCategories(@Query() query: any) {
-    const url = `${this.categoriesServiceUrl}/categories`;
-
-    try {
-      const { data } = await lastValueFrom(
-        this.httpService.get(url, {
-          params: query,
-        }),
-      );
-      return data;
-    } catch (error) {
-      console.error(
-        'Error al obtener categorías desde el microservicio:',
-        error.message,
-      );
-      throw error;
-    }
+  async getAllEquipments(@Query() query: any) {
+    const { data } = await lastValueFrom(
+      this.httpService.get(`${this.equipmentServiceUrl}/equipment`, {
+        params: query,
+      }),
+    );
+    return data;
   }
 
   @Get(':id')
-  async getCategoryById(@Param('id') categoryId: string) {
+  async getEquipment(@Param('id') equipmentId: string) {
     const { data } = await lastValueFrom(
-      this.httpService.get(
-        `${this.categoriesServiceUrl}/categories/${categoryId}`,
-      ),
+      this.httpService.get(`${this.equipmentServiceUrl}/equipment/${equipmentId}`),
     );
     return data;
   }
 
   @Post()
-  async createCategory(@Body() createCategoryDto: any) {
+  async createEquipment(@Body() createEquipmentDto: any) {
     const { data } = await lastValueFrom(
-      this.httpService.post(
-        `${this.categoriesServiceUrl}/categories`,
-        createCategoryDto,
-      ),
+      this.httpService.post(`${this.equipmentServiceUrl}/equipment`, createEquipmentDto),
     );
     return data;
   }
 
   @Patch(':id')
-  async updateCategory(
-    @Param('id') categoryId: string,
-    @Body() updateCategoryDto: any,
+  async updateEquipment(
+    @Param('id') equipmentId: string,
+    @Body() updateEquipmentDto: any,
   ) {
     const { data } = await lastValueFrom(
-      this.httpService.patch(
-        `${this.categoriesServiceUrl}/categories/${categoryId}`,
-        updateCategoryDto,
-      ),
+      this.httpService.patch(`${this.equipmentServiceUrl}/equipment/${equipmentId}`, updateEquipmentDto),
     );
     return data;
   }
 
   @Delete(':id')
-  async deleteCategory(@Param('id') categoryId: string) {
+  async deleteEquipment(@Param('id') equipmentId: string) {
     const { data } = await lastValueFrom(
-      this.httpService.delete(
-        `${this.categoriesServiceUrl}/categories/${categoryId}`,
-      ),
+      this.httpService.delete(`${this.equipmentServiceUrl}/equipment/${equipmentId}`),
     );
     return data;
   }
