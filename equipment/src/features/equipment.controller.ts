@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Inject, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Inject,
+  Query,
+} from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
 import { CreateEquipmentDto } from 'src/dtos/create-equipment.dto';
 import { UpdateEquipmentDto } from 'src/dtos/update-equipment.dto';
@@ -44,6 +54,16 @@ export class EquipmentController {
   async handleCategoryDeleted(@Payload() message: { id: string }) {
     const categoryId = message.id;
     await this.equipmentService.removeCategoryReference(categoryId);
+  }
+
+  @EventPattern('equipment.statusUpdated')
+  async handleEquipmentStatusUpdated(@Payload() message: any) {
+    const { equipmentId, status, userId } = message;
+    await this.equipmentService.updateStatusFromEvent(
+      equipmentId,
+      status,
+      userId,
+    );
   }
 
   @Post('bulk')

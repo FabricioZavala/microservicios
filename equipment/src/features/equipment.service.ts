@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Equipment } from './equipment.schema';
@@ -99,6 +99,23 @@ export class EquipmentService {
       { categoryId },
       { $unset: { categoryId: "" } }
     );
+  }
+
+  async updateStatusFromEvent(
+    equipmentId: string,
+    status: string,
+    userId?: string | null,
+  ) {
+    const equipment = await this.equipmentModel.findById(equipmentId);
+    if (!equipment) {
+      throw new NotFoundException(`Equipo no encontrado: ${equipmentId}`);
+    }
+
+    equipment.status = status;
+    equipment.userId = userId ?? null;
+
+    await equipment.save();
+    return equipment;
   }
 
   async findBulkByIds(ids: string[]): Promise<Equipment[]> {

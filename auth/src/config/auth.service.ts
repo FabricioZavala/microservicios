@@ -3,6 +3,7 @@ import {
   BadRequestException,
   UnauthorizedException,
   NotFoundException,
+  Inject,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -11,12 +12,15 @@ import { JwtService } from '@nestjs/jwt';
 import { UserAuth } from './user-auth.schema';
 import { RegisterDto } from 'src/dtos/register.dto';
 import { LoginDto } from 'src/dtos/login.dto';
+import { ClientKafka } from '@nestjs/microservices';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(UserAuth.name) private userModel: Model<UserAuth>,
     private jwtService: JwtService,
+    @Inject('KAFKA_SERVICE')
+    private readonly kafkaClient: ClientKafka,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -71,13 +75,48 @@ export class AuthService {
       throw new NotFoundException('Usuario no encontrado');
     }
 
+    if (dto.equipmentIds) {
+      const oldEquipmentIds = user.equipmentIds || [];
+      const newEquipmentIds = dto.equipmentIds;
+
+      const added = newEquipmentIds.filter(
+        (equipId: string) => !oldEquipmentIds.includes(equipId),
+      );
+      const removed = oldEquipmentIds.filter(
+        (equipId: string) => !newEquipmentIds.includes(equipId),
+      );
+
+      for (const equipId of added) {
+        this.kafkaClient.emit('equipment.statusUpdated', {
+          equipmentId: equipId,
+          status: 'En uso',
+          userId: user._id.toString(),
+        });
+      }
+
+      for (const equipId of removed) {
+        this.kafkaClient.emit('equipment.statusUpdated', {
+          equipmentId: equipId,
+          status: 'Disponible',
+          userId: null,
+        });
+      }
+
+      user.equipmentIds = newEquipmentIds;
+    }
+
+    if (dto.username) user.username = dto.username;
+    if (dto.email) user.email = dto.email;
+
     if (dto.password) {
       const salt = await bcrypt.genSalt(10);
       dto.password = await bcrypt.hash(dto.password, salt);
+      user.password = dto.password;
     }
 
     if (dto.status) {
-      dto.isActive = dto.status === 'active';
+      user.status = dto.status;
+      user.isActive = dto.status === 'active';
     }
 
     const allowedFields = [
@@ -94,7 +133,6 @@ export class AuthService {
         user[field] = dto[field];
       }
     }
-
     await user.save();
     return { message: 'Usuario actualizado con éxito' };
   }
