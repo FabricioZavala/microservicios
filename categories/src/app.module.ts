@@ -2,10 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { AppController } from './app.controller';
-import { CategoryController } from './category.controller';
-import { CategoryService } from './category.service';
-import { Category, CategorySchema } from './category.schema';
+import { CategoryController } from './categories/category.controller';
+import { CategoryService } from './categories/category.service';
+import { Category, CategorySchema } from './categories/category.schema';
 
 @Module({
   imports: [
@@ -23,9 +22,11 @@ import { Category, CategorySchema } from './category.schema';
         },
       },
     ]),
-    MongooseModule.forFeature([{ name: Category.name, schema: CategorySchema }]),
+    MongooseModule.forFeature([
+      { name: Category.name, schema: CategorySchema },
+    ]),
   ],
-  controllers: [AppController, CategoryController],
+  controllers: [ CategoryController],
   providers: [CategoryService],
 })
 export class AppModule {}
