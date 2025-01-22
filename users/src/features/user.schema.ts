@@ -13,9 +13,8 @@ export class User extends Document {
   fullName?: string;
 
   @Prop({ default: 'active' })
-  status: string; // Ejemplo: 'active', 'inactive', etc.
+  status: string;
 
-  // Podríamos tener un array de equipmentIds si deseamos
   @Prop({ type: [String], default: [] })
   equipmentIds: string[];
 }

@@ -10,9 +10,10 @@ export class Category extends Document {
   description?: string;
 
   @Prop({ default: 'active' })
-  status: string; // Ejemplo: 'active', 'inactive', etc.
+  status: string;
 
-  // Agrega más campos según tu necesidad
+  @Prop({ default: Date.now })
+  createdAt: Date;
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);

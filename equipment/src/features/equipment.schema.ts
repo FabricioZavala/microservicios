@@ -10,15 +10,13 @@ export class Equipment extends Document {
   description?: string;
 
   @Prop({ default: 'available' })
-  status: string; // Ejemplo: 'available', 'in-use', etc.
+  status: string;
 
   @Prop()
-  categoryId?: string; // Referencia a la categoría (relación uno-a-muchos)
+  categoryId?: string;
 
   @Prop()
-  userId?: string; // Referencia al usuario que tiene este equipo
-
-  // Agrega más campos según tu necesidad
+  userId?: string;
 }
 
 export const EquipmentSchema = SchemaFactory.createForClass(Equipment);

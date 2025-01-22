@@ -14,3 +14,5 @@ import { SharedModule } from './shared.module';
   providers: [CategoryService],
 })
 export class CategoryModule {}
+
+//eliminar pq no se usa jijija
