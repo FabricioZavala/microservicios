@@ -9,10 +9,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { UserAuth } from './user-auth.schema';
 import { RegisterDto } from 'src/dtos/register.dto';
 import { LoginDto } from 'src/dtos/login.dto';
 import { ClientKafka } from '@nestjs/microservices';
+import { UserAuth } from '../schemas/user-auth.schema';
+import { AuditLogService } from './audit-log.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,7 @@ export class AuthService {
     private jwtService: JwtService,
     @Inject('KAFKA_SERVICE')
     private readonly kafkaClient: ClientKafka,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -69,23 +71,25 @@ export class AuthService {
     };
   }
 
-  async updateUser(id: string, dto: any) {
+  async updateUser(id: string, dto: any, performedBy: string | null = null) {
     const user = await this.userModel.findById(id);
     if (!user) {
       throw new NotFoundException('Usuario no encontrado');
     }
-
+  
+    const auditDetails: Record<string, any> = {};
+  
     if (dto.equipmentIds) {
       const oldEquipmentIds = user.equipmentIds || [];
       const newEquipmentIds = dto.equipmentIds;
-
+  
       const added = newEquipmentIds.filter(
         (equipId: string) => !oldEquipmentIds.includes(equipId),
       );
       const removed = oldEquipmentIds.filter(
         (equipId: string) => !newEquipmentIds.includes(equipId),
       );
-
+  
       for (const equipId of added) {
         this.kafkaClient.emit('equipment.statusUpdated', {
           equipmentId: equipId,
@@ -93,7 +97,7 @@ export class AuthService {
           userId: user._id.toString(),
         });
       }
-
+  
       for (const equipId of removed) {
         this.kafkaClient.emit('equipment.statusUpdated', {
           equipmentId: equipId,
@@ -101,24 +105,34 @@ export class AuthService {
           userId: null,
         });
       }
-
+  
       user.equipmentIds = newEquipmentIds;
+      auditDetails.equipmentIds = { old: oldEquipmentIds, new: newEquipmentIds };
     }
-
-    if (dto.username) user.username = dto.username;
-    if (dto.email) user.email = dto.email;
-
+  
+    if (dto.username && dto.username !== user.username) {
+      auditDetails.username = { old: user.username, new: dto.username };
+      user.username = dto.username;
+    }
+    
+    if (dto.email && dto.email !== user.email) {
+      auditDetails.email = { old: user.email, new: dto.email };
+      user.email = dto.email;
+    }
+  
     if (dto.password) {
       const salt = await bcrypt.genSalt(10);
-      dto.password = await bcrypt.hash(dto.password, salt);
-      user.password = dto.password;
+      const hashedPassword = await bcrypt.hash(dto.password, salt);
+      auditDetails.password = { changed: true }; // No guardamos contraseñas en texto plano
+      user.password = hashedPassword;
     }
-
-    if (dto.status) {
+  
+    if (dto.status && dto.status !== user.status) {
+      auditDetails.status = { old: user.status, new: dto.status };
       user.status = dto.status;
       user.isActive = dto.status === 'active';
     }
-
+  
     const allowedFields = [
       'username',
       'email',
@@ -129,13 +143,25 @@ export class AuthService {
       'equipmentIds',
     ];
     for (const field of allowedFields) {
-      if (dto[field] !== undefined) {
+      if (dto[field] !== undefined && !auditDetails[field]) {
         user[field] = dto[field];
       }
     }
+  
     await user.save();
+  
+    await this.auditLogService.createLog({
+      action: 'update',
+      entity: 'user',
+      entityId: user._id.toString(),
+      userId: performedBy, // Este es el usuario que realizó la acción
+      details: auditDetails, // Detalles del cambio
+    });
+    
+  
     return { message: 'Usuario actualizado con éxito' };
   }
+  
 
   async getAllUsers() {
     const users = await this.userModel.find({}, '-password');

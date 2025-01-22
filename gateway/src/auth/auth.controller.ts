@@ -7,6 +7,8 @@ import {
   HttpException,
   Get,
   Req,
+  HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
@@ -94,4 +96,20 @@ export class AuthController {
       );
     }
   }
+
+  @Get('audit-logs')
+async getAuditLogs(@Query() query: any) {
+  try {
+    const { data } = await lastValueFrom(
+      this.httpService.get(`${this.authServiceUrl}/audit-logs`, { params: query }),
+    );
+    return data;
+  } catch (error) {
+    throw new HttpException(
+      error.response?.data || 'Error fetching audit logs',
+      error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+}
+
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Equipment } from './equipment.schema';
@@ -7,6 +7,7 @@ import { UpdateEquipmentDto } from 'src/dtos/update-equipment.dto';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
+import { ClientKafka } from '@nestjs/microservices';
 
 @Injectable()
 export class EquipmentService {
@@ -15,14 +16,25 @@ export class EquipmentService {
   constructor(
     @InjectModel(Equipment.name) private readonly equipmentModel: Model<Equipment>,
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
   )  {
     this.categoriesServiceUrl = this.configService.get<string>('CATEGORIES_SERVICE_URL');
   }
 
   async create(data: CreateEquipmentDto): Promise<Equipment> {
     const newEquipment = new this.equipmentModel(data);
-    return newEquipment.save();
+    const savedEquipment = await newEquipment.save();
+  
+    // Emitir evento Kafka para auditoría
+    this.kafkaClient.emit('equipment.audited', {
+      action: 'create',
+      entity: 'equipment',
+      entityId: savedEquipment._id.toString(),
+      details: savedEquipment.toObject(),
+    });
+  
+    return savedEquipment;
   }
 
   async findAll(query: any): Promise<{ data: any[]; totalCount: number }> {
@@ -87,11 +99,42 @@ export class EquipmentService {
   }
 
   async update(id: string, data: UpdateEquipmentDto): Promise<Equipment> {
-    return this.equipmentModel.findByIdAndUpdate(id, data, { new: true }).exec();
+    const oldEquipment = await this.equipmentModel.findById(id);
+    if (!oldEquipment) throw new NotFoundException(`Equipo no encontrado: ${id}`);
+  
+    const updatedEquipment = await this.equipmentModel.findByIdAndUpdate(
+      id,
+      data,
+      { new: true },
+    );
+  
+    // Emitir evento Kafka para auditoría
+    this.kafkaClient.emit('equipment.audited', {
+      action: 'update',
+      entity: 'equipment',
+      entityId: id,
+      details: {
+        old: oldEquipment.toObject(),
+        new: updatedEquipment.toObject(),
+      },
+    });
+  
+    return updatedEquipment;
   }
 
   async remove(id: string): Promise<Equipment> {
-    return this.equipmentModel.findByIdAndDelete(id).exec();
+    const removedEquipment = await this.equipmentModel.findByIdAndDelete(id);
+    if (!removedEquipment) throw new NotFoundException(`Equipo no encontrado: ${id}`);
+  
+    // Emitir evento Kafka para auditoría
+    this.kafkaClient.emit('equipment.audited', {
+      action: 'delete',
+      entity: 'equipment',
+      entityId: id,
+      details: removedEquipment.toObject(),
+    });
+  
+    return removedEquipment;
   }
 
   async removeCategoryReference(categoryId: string): Promise<void> {
