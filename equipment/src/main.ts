@@ -17,7 +17,6 @@ async function bootstrap() {
   });
 
   await app.listen();
-  console.log('Equipment microservice is running');
 
   const httpApp = await NestFactory.create(AppModule);
   const configService = httpApp.get(ConfigService);

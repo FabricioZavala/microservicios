@@ -14,8 +14,6 @@ import { AuthController } from './auth/auth.controller';
     HttpModule,
   ],
   controllers: [
-    //ver si agregator controller es funcional sino borrarlo, pd ya lo comrpobé, no funciona borraloooo
-    // AggregatorController, 
     UsersController,
     EquipmentController,
     CategoriesController,
